@@ -252,7 +252,7 @@ func (h *handler) serveVideo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if dedup.skip(im.Pix) {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			continue
 		}
 		w, err := mpw.CreatePart(hdr)

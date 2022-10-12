@@ -66,16 +66,30 @@ func (d *Device) VarScreeninfo() (VarScreeninfo, error) {
 
 func (d *Device) Image() (image.Image, error) {
 	vinfo, err := d.VarScreeninfo()
+
+	//var xlen = d.finfo.Line_length
+	//var length_virtual = vinfo.Xres_virtual * vinfo.Yres_virtual
+	//var depth = vinfo.Bits_per_pixel
+	//var width = xlen * 8 / depth
+	//var length = width * vinfo.Yres_virtual
+
+	//println("Debug: ", xlen, length, length_virtual, depth, width)
+
+	//println("Debug: from Image: vinfo", vinfo.Bits_per_pixel, vinfo.Xres_virtual, vinfo.Yres_virtual)
+	//println("Debug: from Image: vinfo", vinfo.Bits_per_pixel, vinfo.Xres, vinfo.Yres, vinfo.Xoffset, vinfo.Yoffset)
 	if err != nil {
 		return nil, err
 	}
-	if vinfo.Bits_per_pixel != 16 {
-		return nil, fmt.Errorf("%d bits per pixel unsupported", vinfo.Bits_per_pixel)
-	}
+	//if vinfo.Bits_per_pixel != 16 {
+	//	return nil, fmt.Errorf("%d bits per pixel unsupported", vinfo.Bits_per_pixel)
+	//}
 	virtual := image.Rect(0, 0, int(vinfo.Xres_virtual), int(vinfo.Yres_virtual))
-	if virtual.Dx()*virtual.Dy()*2 != len(d.mmap) {
-		return nil, errors.New("virtual resolution doesn't match framebuffer size")
-	}
+
+	//println("Debug: d.mmap size", len(d.mmap), virtual.Dx()*virtual.Dy()*2, d.finfo.Line_length)
+
+	//if virtual.Dx()*virtual.Dy()*2 != int(length) {
+	//	return nil, errors.New("virtual resolution doesn't match framebuffer size")
+	//}
 	visual := image.Rect(int(vinfo.Xoffset), int(vinfo.Yoffset), int(vinfo.Xres), int(vinfo.Yres))
 	if !visual.In(virtual) {
 		return nil, errors.New("visual resolution not contained in virtual resolution")
