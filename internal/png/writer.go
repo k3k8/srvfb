@@ -453,11 +453,11 @@ func (e *encoder) writeImage(w io.Writer, m image.Image, cb int, level int) erro
 			} else {
 				// Convert from image.Image (which is alpha-premultiplied) to PNG's non-alpha-premultiplied.
 				for x := b.Min.X; x < b.Max.X; x++ {
-					c := color.NRGBAModel.Convert(m.At(x, y)).(color.NRGBA)
-					cr[0][i+0] = c.R
-					cr[0][i+1] = c.G
-					cr[0][i+2] = c.B
-					cr[0][i+3] = c.A
+					c := color.RGBAModel.Convert(m.At(x, y)).(color.RGBA)
+					cr[0][i+0] = c.A
+					cr[0][i+1] = c.R
+					cr[0][i+2] = c.G
+					cr[0][i+3] = 255
 					i += 4
 				}
 			}

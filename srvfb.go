@@ -150,7 +150,7 @@ func (h *handler) serveRaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	im := new(image.Gray16)
+	im := new(image.RGBA)
 	if err := h.readImage(im); err != nil {
 		log.Println(err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -170,7 +170,7 @@ func (h *handler) serveRaw(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	rhdr := &rawHeader{version, 16, uint16(im.Stride), uint32(im.Rect.Dx()), uint32(im.Rect.Dy())}
+	rhdr := &rawHeader{version, 32, uint16(im.Stride), uint32(im.Rect.Dx()), uint32(im.Rect.Dy())}
 	if err = binary.Write(part, binary.BigEndian, rhdr); err != nil {
 		log.Println(err)
 		return
@@ -212,15 +212,15 @@ func (h *handler) serveRaw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) serveVideo(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		log.Println("Not a flusher")
-		http.Error(w, "Internal Server Error", 500)
-		return
-	}
+	//flusher, ok := w.(http.Flusher)
+	//if !ok {
+	//	log.Println("Not a flusher")
+	//	http.Error(w, "Internal Server Error", 500)
+	//	return
+	//}
 
 	var reader interface {
-		readImage(im *image.Gray16) error
+		readImage(im *image.RGBA) error
 	}
 
 	if h.proxy != "" {
@@ -243,7 +243,7 @@ func (h *handler) serveVideo(w http.ResponseWriter, r *http.Request) {
 	mpw.SetBoundary("endofsection")
 	hdr := make(textproto.MIMEHeader)
 	hdr.Add("Content-Type", "image/png")
-	im := new(image.Gray16)
+	im := new(image.RGBA)
 	enc := &png.Encoder{CompressionLevel: png.BestSpeed}
 	var dedup deduper
 	for {
@@ -252,7 +252,7 @@ func (h *handler) serveVideo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if dedup.skip(im.Pix) {
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 		w, err := mpw.CreatePart(hdr)
@@ -261,13 +261,13 @@ func (h *handler) serveVideo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		enc.Encode(w, im)
-		flusher.Flush()
+		//flusher.Flush()
 	}
 }
 
 func (h *handler) serveImage(w http.ResponseWriter, r *http.Request) {
 	var reader interface {
-		readImage(im *image.Gray16) error
+		readImage(im *image.RGBA) error
 	}
 
 	if h.proxy != "" {
@@ -283,7 +283,7 @@ func (h *handler) serveImage(w http.ResponseWriter, r *http.Request) {
 		reader = h
 	}
 
-	im := new(image.Gray16)
+	im := new(image.RGBA)
 	if err := reader.readImage(im); err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -365,12 +365,12 @@ func (h *handler) serveIndex(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, idx)
 }
 
-func (h *handler) readImage(im *image.Gray16) error {
+func (h *handler) readImage(im *image.RGBA) error {
 	vim, err := h.fb.Image()
 	if err != nil {
 		return err
 	}
-	gim, ok := vim.(*image.Gray16)
+	gim, ok := vim.(*image.RGBA)
 	if !ok {
 		return errors.New("framebuffer is not 16-bit grayscale")
 	}
@@ -446,9 +446,9 @@ func (c *proxyconn) readHdr(resp *http.Response) error {
 	return nil
 }
 
-func (c *proxyconn) readImage(im *image.Gray16) error {
+func (c *proxyconn) readImage(im *image.RGBA) error {
 	if len(im.Pix) != c.stride*c.height {
-		*im = image.Gray16{
+		*im = image.RGBA{
 			Pix:    make([]byte, c.stride*c.height),
 			Stride: c.stride,
 			Rect:   image.Rect(0, 0, c.width, c.height),
